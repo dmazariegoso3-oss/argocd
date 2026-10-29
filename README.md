@@ -51,7 +51,7 @@ Una página web corre en Kubernetes. Si cambias el mensaje o el color en Git, Ar
 
 ### Extras
 
-- **Réplicas:** cambia `replicas: 1` a `replicas: 3`, haz push y verás 3 pods en Argo CD. Al recargar la página cambia el nombre del pod.
+- **Réplicas:** cambia `replicas: 1` a `replicas: 3`, haz push y verás 3 pods en Argo CD.
 - **Rollback:** `git revert HEAD` y `git push`, y la página regresa a la versión anterior.
 - **Self-heal:** `kubectl scale deploy demo-web --replicas=5` y Argo CD lo regresa a lo que dice Git.
 

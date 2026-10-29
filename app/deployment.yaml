@@ -30,7 +30,6 @@ spec:
               <body style="margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:$COLOR;font-family:sans-serif;color:white;text-align:center">
               <div>
               <h1 style="font-size:64px">$MENSAJE</h1>
-              <p style="font-size:24px">Pod: $HOSTNAME</p>
               </div>
               </body>
               </html>
