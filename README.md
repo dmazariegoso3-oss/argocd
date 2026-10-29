@@ -46,7 +46,7 @@ Una página web corre en Kubernetes. Si cambias el mensaje o el color en Git, Ar
    git commit -am "Version 2"
    git push
    ```
-4. Espera unos 30 segundos: Argo CD revisa GitHub cada 30 s y aplica el cambio solo. Si quieres que sea inmediato, presiona **Refresh** en la app `demo-web`.
+4. Espera alrededor de un minuto: Argo CD revisa GitHub solo y aplica el cambio. Para que sea inmediato, presiona **Refresh** en la app `demo-web` dentro de Argo CD.
 5. Recarga http://localhost:8081: ahora es verde y dice "version 2".
 
 ### Extras
