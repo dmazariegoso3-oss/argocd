@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: REPO_URL
+    repoURL: https://github.com/dmazariegoso3-oss/argocd.git
     targetRevision: HEAD
     path: app
   destination:

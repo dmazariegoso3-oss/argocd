@@ -4,64 +4,78 @@ Una página web corre en Kubernetes. Si cambias el mensaje o el color en Git, Ar
 
 ## Qué necesitas
 
-- Docker Desktop, con Kubernetes activado: Settings → Kubernetes → Enable Kubernetes → Apply & restart
-- Git
-- Una cuenta de GitHub
+- Docker Desktop con Kubernetes activado: Kubernetes › Create cluster › Kubeadm › Install
+- Git y una cuenta de GitHub
 
-## Montarlo en tu laptop (unos 10 minutos)
+## Archivos
 
-1. Haz **Fork** de este repositorio en GitHub (botón arriba a la derecha).
-2. Clona **tu** fork:
+| Archivo | Para qué sirve |
+| --- | --- |
+| `app/deployment.yaml` | La página: mensaje, color y réplicas |
+| `app/service.yaml` | Publica la página en el puerto 8081 |
+| `argocd/application.yaml` | Le dice a Argo CD qué repositorio y carpeta vigilar |
+
+## Configuración manual
+
+1. Haz **Fork** de este repositorio y clónalo:
    ```
    git clone https://github.com/<tu-usuario>/argocd.git
    cd argocd
    ```
-3. Ejecuta el instalador con el URL de **tu** fork.
+2. En `argocd/application.yaml` cambia `repoURL` por el URL de tu fork.
+3. Crea el namespace e instala Argo CD:
+   ```
+   kubectl create namespace argocd
+   kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+   ```
+4. Espera a que todos los pods estén en `Running`:
+   ```
+   kubectl get pods -n argocd
+   ```
+5. Obtén la contraseña del usuario `admin` (PowerShell):
+   ```
+   $p = kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}"
+   [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($p))
+   ```
+6. Abre el panel de Argo CD (deja esta ventana abierta) y entra a https://localhost:8080:
+   ```
+   kubectl port-forward svc/argocd-server -n argocd 8080:443
+   ```
+7. Registra la aplicación:
+   ```
+   kubectl apply -f argocd/application.yaml
+   ```
+8. Abre la app en http://127.0.0.1:8081: página azul que dice "version 1".
 
-   Windows (PowerShell):
-   ```
-   powershell -ExecutionPolicy Bypass -File .\instalar.ps1 -RepoUrl https://github.com/<tu-usuario>/argocd.git
-   ```
-   Mac / Linux:
-   ```
-   chmod +x instalar.sh
-   ./instalar.sh https://github.com/<tu-usuario>/argocd.git
-   ```
-4. Al terminar, el instalador muestra la contraseña. Abre:
-   - Argo CD: https://localhost:8080 (usuario `admin`; acepta la advertencia del certificado)
-   - La app: http://localhost:8081
+### Opcional: que se actualice más rápido
+
+Por defecto Argo CD revisa GitHub cada 3 minutos. Para que revise cada 15 segundos:
+```
+kubectl patch configmap argocd-cm -n argocd --type merge -p '{\"data\":{\"timeout.reconciliation\":\"15s\",\"timeout.reconciliation.jitter\":\"0s\"}}'
+kubectl patch configmap argocd-cmd-params-cm -n argocd --type merge -p '{\"data\":{\"reposerver.revision.cache.expiration\":\"5s\"}}'
+kubectl rollout restart deployment/argocd-repo-server -n argocd
+kubectl rollout restart statefulset/argocd-application-controller -n argocd
+```
 
 ## La demostración
 
-1. Abre la app en http://localhost:8081: página azul que dice "version 1".
-2. Edita `app/deployment.yaml`:
+1. Edita `app/deployment.yaml`:
    ```yaml
    - name: MENSAJE
      value: "Hola desde Argo CD - version 2"
    - name: COLOR
      value: "#27AE60"
    ```
-3. Sube el cambio:
+2. Sube el cambio:
    ```
    git commit -am "Version 2"
    git push
    ```
-4. Espera unos 30 segundos: Argo CD revisa GitHub cada 15 s y aplica el cambio solo, sin presionar nada. (Con **Refresh** en la app `demo-web` es inmediato.)
-5. Recarga http://localhost:8081: ahora es verde y dice "version 2".
+3. Espera a que Argo CD lo detecte, o presiona **Refresh** en la app `demo-web`.
+4. Recarga http://127.0.0.1:8081: ahora es verde y dice "version 2".
 
-### Extras
-
-- **Réplicas:** cambia `replicas: 1` a `replicas: 3`, haz push y verás 3 pods en Argo CD.
-- **Rollback:** `git revert HEAD` y `git push`, y la página regresa a la versión anterior.
-- **Self-heal:** `kubectl scale deploy demo-web --replicas=5` y Argo CD lo regresa a lo que dice Git.
+**Rollback:** `git revert HEAD` y `git push`, y la página regresa a la versión anterior.
 
 ## La idea en una frase
 
 Git dice cómo debe estar la aplicación; Argo CD vigila Git y deja el clúster igual.
-
-## Si algo falla
-
-- **`kubectl` no responde:** revisa que Kubernetes esté en verde en Docker Desktop.
-- **La app no abre en el 8081:** ejecuta `kubectl port-forward svc/demo-web 8081:8081` y deja esa ventana abierta.
-- **Argo CD no ve el cambio:** confirma que el push llegó a GitHub y presiona Refresh. El repositorio debe ser **público**.
-- **Se cerró la ventana del instalador:** vuelve a abrir Argo CD con `kubectl port-forward svc/argocd-server -n argocd 8080:443`.
