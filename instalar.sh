@@ -17,9 +17,12 @@ echo "2/4 Esperando a que Argo CD este listo (puede tardar unos minutos)..."
 kubectl wait --for=condition=available deployment --all -n argocd --timeout=600s
 kubectl rollout status statefulset/argocd-application-controller -n argocd --timeout=600s
 
-echo "3/4 Configurando revision cada 30 segundos y registrando la aplicacion..."
-kubectl patch configmap argocd-cm -n argocd --type merge -p '{"data":{"timeout.reconciliation":"30s"}}'
+echo "3/4 Configurando revision cada 15 segundos y registrando la aplicacion..."
+kubectl patch configmap argocd-cm -n argocd --type merge -p '{"data":{"timeout.reconciliation":"15s","timeout.reconciliation.jitter":"0s"}}'
+kubectl patch configmap argocd-cmd-params-cm -n argocd --type merge -p '{"data":{"reposerver.revision.cache.expiration":"5s"}}'
+kubectl rollout restart deployment/argocd-repo-server -n argocd
 kubectl rollout restart statefulset/argocd-application-controller -n argocd
+kubectl rollout status deployment/argocd-repo-server -n argocd --timeout=600s
 kubectl rollout status statefulset/argocd-application-controller -n argocd --timeout=600s
 sed "s|REPO_URL|$REPO_URL|" "$DIR/argocd/application.yaml" | kubectl apply -f -
 

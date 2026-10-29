@@ -12,6 +12,7 @@ spec:
       labels:
         app: demo-web
     spec:
+      terminationGracePeriodSeconds: 1
       containers:
         - name: web
           image: nginx:1.27-alpine
@@ -34,6 +35,8 @@ spec:
               </body>
               </html>
               EOF
+              sed -i 's/keepalive_timeout.*/keepalive_timeout 0;/' /etc/nginx/nginx.conf
+              sed -i 's#location / {#location / {\n        add_header Cache-Control "no-store";#' /etc/nginx/conf.d/default.conf
               exec nginx -g 'daemon off;'
           ports:
             - containerPort: 80
