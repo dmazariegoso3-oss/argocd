@@ -11,7 +11,10 @@ Write-Host "2/4 Esperando a que Argo CD este listo (puede tardar unos minutos)..
 kubectl wait --for=condition=available deployment --all -n argocd --timeout=600s
 kubectl rollout status statefulset/argocd-application-controller -n argocd --timeout=600s
 
-Write-Host "3/4 Registrando la aplicacion..." -ForegroundColor Cyan
+Write-Host "3/4 Configurando revision cada 30 segundos y registrando la aplicacion..." -ForegroundColor Cyan
+kubectl patch configmap argocd-cm -n argocd --type merge -p '{\"data\":{\"timeout.reconciliation\":\"30s\"}}'
+kubectl rollout restart statefulset/argocd-application-controller -n argocd
+kubectl rollout status statefulset/argocd-application-controller -n argocd --timeout=600s
 (Get-Content "$PSScriptRoot\argocd\application.yaml" -Raw).Replace("REPO_URL", $RepoUrl) | kubectl apply -f -
 
 $b64 = kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}"
