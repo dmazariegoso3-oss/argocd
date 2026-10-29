@@ -18,9 +18,9 @@ spec:
           image: nginx:1.27-alpine
           env:
             - name: MENSAJE
-              value: "Hola desde Argo CD - version 2"
+              value: "Hola desde Argo CD - version 1"
             - name: COLOR
-              value: "#27AE60"
+              value: "#2E86DE"
           command: ["/bin/sh", "-c"]
           args:
             - |
